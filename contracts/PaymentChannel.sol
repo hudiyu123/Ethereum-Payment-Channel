@@ -8,9 +8,12 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 contract PaymentChannel {
     using ECDSA for bytes32;
 
+    event StartSenderClose();
+    event Withdraw(uint256 amountAuthorized, bytes signature);
+
     address payable public sender;
     address payable public receiver;
-    uint256 public withdrawn;
+    uint256 public withdrawnAmount;
     uint public closeDuration;
     uint public expiration = type(uint).max;
 
@@ -20,63 +23,68 @@ contract PaymentChannel {
         closeDuration = closeDuration_;
     }
 
-    function getMessageHash(uint amount_) external view returns (bytes32) {
-        return getMessageHash_(amount_);
+    function getMessageHash(uint amount) external view returns (bytes32) {
+        return getMessageHash_(amount);
     }
 
-    function getEthSignedMessageHash(uint amount_) external view returns (bytes32) {
-        return getEthSignedMessageHash_(amount_);
+    function getEthSignedMessageHash(uint amount) external view returns (bytes32) {
+        return getEthSignedMessageHash_(amount);
     }
 
-    function verifyMessage(uint amount_, bytes memory signature_) external view returns (bool) {
-        return verifyMessage_(amount_, signature_);
+    function verifyMessage(uint amount, bytes memory signature) external view returns (bool) {
+        return verifyMessage_(amount, signature);
     }
 
-    function getMessageHash_(uint amount_) private view returns (bytes32) {
-        return keccak256(abi.encodePacked(address(this), amount_));
-    }
+    function close(uint amount, bytes memory signature) external {
+        require(msg.sender == receiver, "Only receiver can call close function.");
+        require(verifyMessage_(amount, signature), "Signed message is invalid.");
+        require(amount >= withdrawnAmount, "Amount must be greater than or equal to withdrawn amount.");
 
-    function getEthSignedMessageHash_(uint amount_) private view returns (bytes32) {
-        return getMessageHash_(amount_).toEthSignedMessageHash();
-    }
-
-    function verifyMessage_(uint amount_, bytes memory signature_) private view returns (bool) {
-        return getEthSignedMessageHash_(amount_).recover(signature_) == sender;
-    }
-
-    function close(uint amount_, bytes memory signature_) external {
-        require(msg.sender == receiver);
-        require(verifyMessage_(amount_, signature_));
-        require(amount_ >= withdrawn);
-
-        (bool sent, ) = receiver.call{value: amount_ - withdrawn}("");
-        require(sent);
+        if (amount > withdrawnAmount) {
+            (bool sent, ) = receiver.call{value : amount - withdrawnAmount}("");
+            require(sent);
+        }
 
         selfdestruct(sender);
     }
 
     function startSenderClose() public {
-        require(msg.sender == sender);
+        require(msg.sender == sender, "Only sender can start sender close.");
         expiration = block.timestamp + closeDuration;
+        emit StartSenderClose();
     }
 
     function claimTimeout() public {
-        require(block.timestamp >= expiration);
+        require(block.timestamp >= expiration, "Contract is not expired yet.");
         selfdestruct(sender);
     }
 
     function deposit() public payable {
-        require(msg.sender == sender);
+        require(msg.sender == sender, "Only sender can deposit eth.");
     }
 
-    function withdraw(uint256 amountAuthorized_, bytes memory signature_) public {
-        require(msg.sender == receiver);
-        require(verifyMessage_(amountAuthorized_, signature_));
-        require(amountAuthorized_ > withdrawn);
+    function withdraw(uint256 authorizedAmount, bytes memory signature) public {
+        require(msg.sender == receiver, "Only receiver withdraw.");
+        require(verifyMessage_(authorizedAmount, signature), "Signed message is invalid.");
+        require(authorizedAmount > withdrawnAmount, "Authorized amount must be greater than withdrawn amount.");
 
-        uint256 amountToWithdraw = amountAuthorized_ - withdrawn;
-        withdrawn += amountToWithdraw;
-        (bool sent, ) = receiver.call{value: amountToWithdraw}("");
+        uint256 amount = authorizedAmount - withdrawnAmount;
+        withdrawnAmount += amount;
+        (bool sent, ) = receiver.call{value : amount}("");
         require(sent);
+
+        emit Withdraw(authorizedAmount, signature);
+    }
+
+    function getMessageHash_(uint amount) private view returns (bytes32) {
+        return keccak256(abi.encodePacked(address(this), amount));
+    }
+
+    function getEthSignedMessageHash_(uint amount) private view returns (bytes32) {
+        return getMessageHash_(amount).toEthSignedMessageHash();
+    }
+
+    function verifyMessage_(uint amount, bytes memory signature) private view returns (bool) {
+        return getEthSignedMessageHash_(amount).recover(signature) == sender;
     }
 }
