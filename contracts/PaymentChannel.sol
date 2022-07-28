@@ -12,16 +12,26 @@ contract PaymentChannel {
 
   // Sender of the payment channel
   address payable public sender;
+
   // Receiver of the payment channel
   address payable public receiver;
+
   // Weis the receiver has already withdrawn
   uint256 public withdrawnAmount;
+
   // Response timeframe (in seconds) for the receiver when the sender initiates
   // channel closure
   uint public closeTimeframe;
+
   // Expiration of the channel
   uint public expiration = type(uint).max;
 
+  /**
+   * Opens a payment channel.
+   *
+   * @param receiver_         receiver of the payment channel
+   * @param closeTimeframe_   timeframe of sender channel closure
+   */
   constructor(address payable receiver_, uint closeTimeframe_) payable {
     sender = payable(msg.sender);
     receiver = receiver_;
@@ -126,16 +136,21 @@ contract PaymentChannel {
   }
 
   function getPaymentHash_(uint256 amount) private view returns (bytes32) {
+    // Packs the address of the contract and the amount of ether together.
+    // Calculates the hash of the original message.
     return keccak256(abi.encodePacked(address(this), amount));
   }
 
   function getEthSignedPaymentHash_(uint256 amount) private view
   returns (bytes32) {
+    // Calculates the payment message signed in Ethereum style.
+    // i.e., keccak256("\x19Ethereum Signed Message:\n32", hash).
     return getPaymentHash_(amount).toEthSignedMessageHash();
   }
 
   function verifyPayment_(uint256 amount, bytes memory signature) private view
   returns (bool) {
+    // Checks the sender of the payment message with signature.
     return getEthSignedPaymentHash_(amount).recover(signature) == sender;
   }
 }

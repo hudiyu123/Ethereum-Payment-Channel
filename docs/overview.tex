@@ -1,0 +1,13 @@
+\section{Overview}\label{sec:overview}
+Payment channels allow participants to make repeated transfers of ether without using transactions.
+In this project, I will build a long-lived unidirectional payment channel between two participants.
+The usage of the proposed payment channel consists of:
+\begin{itemize}
+    \item The sender opens a payment channel by deploys the smart contract with ether.
+    \item The sender signs payment messages that specify the amount of ether owed to the receiver.
+    \item The sender adds more amount of ether to the smart contract.
+    \item The receiver withdraws ether as needed before closing the channel.
+    \item The receiver closes the payment channel, withdrawing its authorized amount of ether and sending the remainder
+    back to the sender.
+    \item The sender initiates the closure of channel to retrieve unspent funds in a timeframe.
+\end{itemize}

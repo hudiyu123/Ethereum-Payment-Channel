@@ -1,7 +1,9 @@
 // Sender of the payment channel
 address payable public sender;
+
 // Receiver of the payment channel
 address payable public receiver;
+
 // Response timeframe (in seconds) for the receiver when the sender initiates
 // channel closure
 uint public closeTimeframe;

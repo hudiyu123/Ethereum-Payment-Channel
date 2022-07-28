@@ -1,0 +1,6 @@
+\section{Verifying Payments}\label{sec:verifying-payments}
+We use ECDSA library from OpenZeppelin to check signatures of payment messages on chain.
+In particular, we use two functions:
+\verbatiminput{./src/ecdsa-library.txt}
+The implementation is shown as below.
+\verbatiminput{./src/verifying-payments.txt}
