@@ -1,12 +1,12 @@
-// Response timeframe (in seconds) for the receiver when the sender initiates
+// Response timeframe (in seconds) for the receiver after the sender initiates
 // channel closure
 uint public closeTimeframe;
 
-// Expiration of the channel (initially infinite)
+// Expiration of the payment channel (initially infinite)
 uint public expiration = type(uint).max;
 
 /**
- * Starts the channel closure from sender.
+ * Initiates the channel closure by sender.
  */
 function initiateSenderClose() public {
   require(msg.sender == sender, "Only the sender can initiate sender close.");

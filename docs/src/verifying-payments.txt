@@ -1,18 +1,18 @@
-function getPaymentHash_(uint256 amount) private view returns (bytes32) {
+function getPaymentMessageHash_(uint256 amount) private view returns (bytes32) {
   // Packs the address of the contract and the amount of ether together.
   // Calculates the hash of the original message.
   return keccak256(abi.encodePacked(address(this), amount));
 }
 
-function getEthSignedPaymentHash_(uint256 amount) private view
+function getEthSignedPaymentMessageHash_(uint256 amount) private view
 returns (bytes32) {
   // Calculates the payment message signed in Ethereum style.
   // i.e., keccak256("\x19Ethereum Signed Message:\n32", hash).
-  return getPaymentHash_(amount).toEthSignedMessageHash();
+  return getPaymentMessageHash_(amount).toEthSignedMessageHash();
 }
 
-function verifyPayment_(uint256 amount, bytes memory signature) private view
-returns (bool) {
+function verifyPaymentMessage_(uint256 amount, bytes memory signature) private
+view returns (bool) {
   // Checks the sender of the payment message with signature.
-  return getEthSignedPaymentHash_(amount).recover(signature) == sender;
+  return getEthSignedPaymentMessageHash_(amount).recover(signature) == sender;
 }

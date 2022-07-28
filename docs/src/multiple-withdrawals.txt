@@ -1,12 +1,12 @@
 /**
- * Withdraws ether with signed payment message.
+ * Withdraws ether with a payment message.
  *
- * @param authorizedAmount    amount of the payment.
+ * @param authorizedAmount    authorized amount of ether (in wei)
  * @param signature           ECDSA signature of the payment message
  */
 function withdraw(uint256 authorizedAmount, bytes memory signature) public {
   require(msg.sender == receiver, "Only the receiver can withdraw ether.");
-  require(verifyPayment_(authorizedAmount, signature),
+  require(verifyPaymentMessage_(authorizedAmount, signature),
     "Signed payment message is invalid.");
   require(authorizedAmount > withdrawnAmount,
     "Authorized amount must be greater than amount already withdrawn.");

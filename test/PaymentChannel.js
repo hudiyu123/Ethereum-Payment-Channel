@@ -12,25 +12,25 @@ describe('PaymentChannel', function () {
     return { paymentChannel, bob, alice }
   }
 
-  it('getPaymentHash, getEthSignedPaymentHash, verifyPayment', async function () {
+  it('getPaymentMessageHash, getEthSignedPaymentMessageHash, verifyPaymentMessage', async function () {
     const { paymentChannel, bob } = await loadFixture(deployPaymentChannelFixture)
     const contractAddress = paymentChannel.address
     const amount = 10
     const paymentHash = ethers.utils.solidityKeccak256(['address', 'uint256'], [contractAddress, amount])
-    expect(await paymentChannel.getPaymentHash(amount)).to.equal(paymentHash)
+    expect(await paymentChannel.getPaymentMessageHash(amount)).to.equal(paymentHash)
 
     const ethSignedPaymentHash = ethers.utils.solidityKeccak256(['string', 'bytes32'],
       ['\x19Ethereum Signed Message:\n32', paymentHash])
-    expect(await paymentChannel.getEthSignedPaymentHash(amount)).to.equal(ethSignedPaymentHash)
+    expect(await paymentChannel.getEthSignedPaymentMessageHash(amount)).to.equal(ethSignedPaymentHash)
 
     const signature = await bob.signMessage(ethers.utils.arrayify(paymentHash))
-    expect(await paymentChannel.verifyPayment(amount, signature))
+    expect(await paymentChannel.verifyPaymentMessage(amount, signature))
   })
 
   it('withdraw-case1', async function () {
     const { paymentChannel, bob, alice } = await loadFixture(deployPaymentChannelFixture)
     const amount = 5
-    const paymentHash = await paymentChannel.getPaymentHash(amount)
+    const paymentHash = await paymentChannel.getPaymentMessageHash(amount)
     const signature = await bob.signMessage(ethers.utils.arrayify(paymentHash))
     await expect(paymentChannel.withdraw(amount, signature)).to.be.revertedWith('Only the receiver can withdraw ether.')
     await expect(paymentChannel.connect(alice).withdraw(amount + 1, signature)).to.be.revertedWith(
@@ -38,7 +38,7 @@ describe('PaymentChannel', function () {
     await paymentChannel.connect(alice).withdraw(amount, signature)
 
     const newAmount = amount - 1
-    const newPaymentHash = await paymentChannel.getPaymentHash(newAmount)
+    const newPaymentHash = await paymentChannel.getPaymentMessageHash(newAmount)
     const newSignature = await bob.signMessage(ethers.utils.arrayify(newPaymentHash))
     await expect(paymentChannel.connect(alice).withdraw(newAmount, newSignature)).to.be.revertedWith(
       'Authorized amount must be greater than amount already withdrawn.')
@@ -47,7 +47,7 @@ describe('PaymentChannel', function () {
   it('withdraw-case2', async function () {
     const { paymentChannel, bob, alice } = await loadFixture(deployPaymentChannelFixture)
     const amount = ethers.utils.parseUnits('11')
-    const paymentHash = await paymentChannel.getPaymentHash(amount)
+    const paymentHash = await paymentChannel.getPaymentMessageHash(amount)
     const signature = await bob.signMessage(ethers.utils.arrayify(paymentHash))
     await expect(paymentChannel.connect(alice).withdraw(amount, signature)).to.be.revertedWith('Transaction failed.')
   })
@@ -55,7 +55,7 @@ describe('PaymentChannel', function () {
   it('close-case1', async function () {
     const { paymentChannel, bob, alice } = await loadFixture(deployPaymentChannelFixture)
     const amount = 10
-    const paymentHash = await paymentChannel.getPaymentHash(amount)
+    const paymentHash = await paymentChannel.getPaymentMessageHash(amount)
     const signature = await bob.signMessage(ethers.utils.arrayify(paymentHash))
     await paymentChannel.connect(alice).close(amount, signature)
   })
@@ -63,7 +63,7 @@ describe('PaymentChannel', function () {
   it('close-case2', async function () {
     const { paymentChannel, bob, alice } = await loadFixture(deployPaymentChannelFixture)
     const amount = 5
-    const paymentHash = await paymentChannel.getPaymentHash(amount)
+    const paymentHash = await paymentChannel.getPaymentMessageHash(amount)
     const signature = await bob.signMessage(ethers.utils.arrayify(paymentHash))
     await expect(paymentChannel.close(amount, signature)).to.be.revertedWith(
       'Only the receiver can call the close function.')
@@ -72,7 +72,7 @@ describe('PaymentChannel', function () {
     paymentChannel.connect(alice).withdraw(amount, signature)
 
     const newAmount = amount - 1
-    const newPaymentHash = await paymentChannel.getPaymentHash(newAmount)
+    const newPaymentHash = await paymentChannel.getPaymentMessageHash(newAmount)
     const newSignature = await bob.signMessage(ethers.utils.arrayify(newPaymentHash))
     await expect(paymentChannel.connect(alice).close(newAmount, newSignature)).to.be.revertedWith(
       'Amount must be greater than or equal to withdrawn amount.')
@@ -83,7 +83,7 @@ describe('PaymentChannel', function () {
   it('close-case3', async function () {
     const { paymentChannel, bob, alice } = await loadFixture(deployPaymentChannelFixture)
     const amount = ethers.utils.parseUnits('11')
-    const paymentHash = await paymentChannel.getPaymentHash(amount)
+    const paymentHash = await paymentChannel.getPaymentMessageHash(amount)
     const signature = await bob.signMessage(ethers.utils.arrayify(paymentHash))
     await expect(paymentChannel.connect(alice).close(amount, signature)).to.be.revertedWith('Transaction failed.')
   })

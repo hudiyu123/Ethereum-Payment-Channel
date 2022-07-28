@@ -16,21 +16,22 @@ contract PaymentChannel {
   // Receiver of the payment channel
   address payable public receiver;
 
-  // Weis the receiver has already withdrawn
+  // Amount of ether (in wei) the receiver has already withdrawn
   uint256 public withdrawnAmount;
 
-  // Response timeframe (in seconds) for the receiver when the sender initiates
+  // Response timeframe (in seconds) for the receiver after the sender initiates
   // channel closure
   uint public closeTimeframe;
 
-  // Expiration of the channel (initially infinite)
+  // Expiration of the payment channel (initially infinite)
   uint public expiration = type(uint).max;
 
   /**
    * Opens a payment channel.
    *
    * @param receiver_         receiver of the payment channel
-   * @param closeTimeframe_   timeframe of sender channel closure
+   * @param closeTimeframe_   timeframe after the sender initiates channel
+   *                          closure
    */
   constructor(address payable receiver_, uint closeTimeframe_) payable {
     sender = payable(msg.sender);
@@ -39,48 +40,49 @@ contract PaymentChannel {
   }
 
   /**
-   * Calculates the payment hash.
+   * Calculates the hash of payment message.
    *
-   * @param amount    amount of the payment
-   * @return          hash of the payment
+   * @param amount    amount of ether (in wei)
+   * @return          hash of the payment message
    */
-  function getPaymentHash(uint256 amount) external view returns (bytes32) {
-    return getPaymentHash_(amount);
-  }
-
-  /**
-   * Calculates the payment hash in Ethereum signed message style.
-   *
-   * @param amount    amount of the payment
-   * @return          hash of the eth signed payment
-   */
-  function getEthSignedPaymentHash(uint256 amount) external view
+  function getPaymentMessageHash(uint256 amount) external view
   returns (bytes32) {
-    return getEthSignedPaymentHash_(amount);
+    return getPaymentMessageHash_(amount);
   }
 
   /**
-   * Verifies a payment with signature.
+   * Calculates the hash of Ethereum signed payment message.
    *
-   * @param amount      amount of the payment.
-   * @param signature   ECDSA signature of the payment message
-   * @return            true if the payment is valid, otherwise false
+   * @param amount    amount of ether (in wei)
+   * @return          hash of the eth signed payment message
    */
-  function verifyPayment(uint256 amount, bytes memory signature) external view
-  returns (bool) {
-    return verifyPayment_(amount, signature);
+  function getEthSignedPaymentMessageHash(uint256 amount) external view
+  returns (bytes32) {
+    return getEthSignedPaymentMessageHash_(amount);
   }
 
   /**
-   * Closes the payment channel with a final payment.
+   * Verifies a payment message with its ECDSA signature.
    *
-   * @param amount      amount of the payment.
+   * @param amount      amount of ether (in wei)
+   * @param signature   ECDSA signature of the payment message
+   * @return            true if the payment message is valid, otherwise false
+   */
+  function verifyPaymentMessage(uint256 amount, bytes memory signature) external
+  view returns (bool) {
+    return verifyPaymentMessage_(amount, signature);
+  }
+
+  /**
+   * Closes the payment channel.
+   *
+   * @param amount      amount of ether (in wei)
    * @param signature   ECDSA signature of the payment message
    */
   function close(uint256 amount, bytes memory signature) external {
     require(msg.sender == receiver,
       "Only the receiver can call the close function.");
-    require(verifyPayment_(amount, signature),
+    require(verifyPaymentMessage_(amount, signature),
       "Signed payment message is invalid.");
     require(amount >= withdrawnAmount,
       "Amount must be greater than or equal to withdrawn amount.");
@@ -96,7 +98,7 @@ contract PaymentChannel {
   }
 
   /**
-   * Starts the channel closure from sender.
+   * Initiates the channel closure by sender.
    */
   function initiateSenderClose() public {
     require(msg.sender == sender, "Only the sender can initiate sender close.");
@@ -107,7 +109,7 @@ contract PaymentChannel {
   }
 
   /**
-   * Closes the payment channel if it is expired.
+   * Claims the payment channel is expired and closes it.
    */
   function claimTimeout() public {
     require(block.timestamp >= expiration, "Contract is not expired yet.");
@@ -122,14 +124,14 @@ contract PaymentChannel {
   }
 
   /**
-   * Withdraws ether with signed payment message.
+   * Withdraws ether with a payment message.
    *
-   * @param authorizedAmount    amount of the payment.
+   * @param authorizedAmount    authorized amount of ether (in wei)
    * @param signature           ECDSA signature of the payment message
    */
   function withdraw(uint256 authorizedAmount, bytes memory signature) public {
     require(msg.sender == receiver, "Only the receiver can withdraw ether.");
-    require(verifyPayment_(authorizedAmount, signature),
+    require(verifyPaymentMessage_(authorizedAmount, signature),
       "Signed payment message is invalid.");
     require(authorizedAmount > withdrawnAmount,
       "Authorized amount must be greater than amount already withdrawn.");
@@ -141,22 +143,23 @@ contract PaymentChannel {
     require(success, "Transaction failed.");
   }
 
-  function getPaymentHash_(uint256 amount) private view returns (bytes32) {
+  function getPaymentMessageHash_(uint256 amount) private view
+  returns (bytes32) {
     // Packs the address of the contract and the amount of ether together.
     // Calculates the hash of the original message.
     return keccak256(abi.encodePacked(address(this), amount));
   }
 
-  function getEthSignedPaymentHash_(uint256 amount) private view
+  function getEthSignedPaymentMessageHash_(uint256 amount) private view
   returns (bytes32) {
     // Calculates the payment message signed in Ethereum style.
     // i.e., keccak256("\x19Ethereum Signed Message:\n32", hash).
-    return getPaymentHash_(amount).toEthSignedMessageHash();
+    return getPaymentMessageHash_(amount).toEthSignedMessageHash();
   }
 
-  function verifyPayment_(uint256 amount, bytes memory signature) private view
-  returns (bool) {
+  function verifyPaymentMessage_(uint256 amount, bytes memory signature) private
+  view returns (bool) {
     // Checks the sender of the payment message with signature.
-    return getEthSignedPaymentHash_(amount).recover(signature) == sender;
+    return getEthSignedPaymentMessageHash_(amount).recover(signature) == sender;
   }
 }

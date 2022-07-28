@@ -4,10 +4,17 @@ address payable public sender;
 // Receiver of the payment channel
 address payable public receiver;
 
-// Response timeframe (in seconds) for the receiver when the sender initiates
+// Response timeframe (in seconds) for the receiver after the sender initiates
 // channel closure
 uint public closeTimeframe;
 
+/**
+ * Opens a payment channel.
+ *
+ * @param receiver_         receiver of the payment channel
+ * @param closeTimeframe_   timeframe after the sender initiates channel
+ *                          closure
+ */
 constructor(address payable receiver_, uint closeTimeframe_) payable {
   sender = payable(msg.sender);
   receiver = receiver_;

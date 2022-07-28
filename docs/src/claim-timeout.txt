@@ -1,5 +1,5 @@
 /**
- * Closes the payment channel if it is expired.
+ * Claims the payment channel is expired and closes it.
  */
 function claimTimeout() public {
   require(block.timestamp >= expiration, "Contract is not expired yet.");

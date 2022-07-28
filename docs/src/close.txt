@@ -1,13 +1,13 @@
 /**
- * Closes the payment channel with a final payment.
+ * Closes the payment channel.
  *
- * @param amount      amount of the payment.
+ * @param amount      amount of ether (in wei)
  * @param signature   ECDSA signature of the payment message
 */
 function close(uint256 amount, bytes memory signature) external {
   require(msg.sender == receiver,
     "Only the receiver can call the close function.");
-  require(verifyPayment_(amount, signature),
+  require(verifyPaymentMessage_(amount, signature),
     "Signed payment message is invalid.");
   require(amount >= withdrawnAmount,
     "Amount must be greater than or equal to withdrawn amount.");
