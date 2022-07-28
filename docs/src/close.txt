@@ -1,0 +1,23 @@
+/**
+ * Closes the payment channel with a final payment.
+ *
+ * @param amount      amount of the payment.
+ * @param signature   ECDSA signature of the payment message
+*/
+function close(uint256 amount, bytes memory signature) external {
+  require(msg.sender == receiver,
+    "Only the receiver can call the close function.");
+  require(verifyPayment_(amount, signature),
+    "Signed payment message is invalid.");
+  require(amount >= withdrawnAmount,
+    "Amount must be greater than or equal to withdrawn amount.");
+
+  // Perform transaction only when request amount is greater than amount
+  // already withdrawn.
+  if (amount > withdrawnAmount) {
+    (bool success,) = receiver.call{value : amount - withdrawnAmount}("");
+    require(success, "Transaction failed.");
+  }
+
+  selfdestruct(sender);
+}

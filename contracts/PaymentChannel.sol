@@ -63,7 +63,7 @@ contract PaymentChannel {
    * Verifies a payment with signature.
    *
    * @param amount      amount of the payment.
-   * @param signature   ECDSA signature of the signed payment
+   * @param signature   ECDSA signature of the payment message
    * @return            true if the payment is valid, otherwise false
    */
   function verifyPayment(uint256 amount, bytes memory signature) external view
@@ -72,10 +72,10 @@ contract PaymentChannel {
   }
 
   /**
-   * Closes the contract with a final payment.
+   * Closes the payment channel with a final payment.
    *
    * @param amount      amount of the payment.
-   * @param signature   ECDSA signature of the signed payment
+   * @param signature   ECDSA signature of the payment message
    */
   function close(uint256 amount, bytes memory signature) external {
     require(msg.sender == receiver,
@@ -85,6 +85,8 @@ contract PaymentChannel {
     require(amount >= withdrawnAmount,
       "Amount must be greater than or equal to withdrawn amount.");
 
+    // Perform transaction only when request amount is greater than amount
+    // already withdrawn.
     if (amount > withdrawnAmount) {
       (bool success,) = receiver.call{value : amount - withdrawnAmount}("");
       require(success, "Transaction failed.");
@@ -99,11 +101,13 @@ contract PaymentChannel {
   function initiateSenderClose() public {
     require(msg.sender == sender, "Only the sender can initiate sender close.");
     expiration = block.timestamp + closeTimeframe;
+    // The receiver can monitor the InitiateSenderClose event to known it is
+    // time to retrieve what they are owed by closing the channel.
     emit InitiateSenderClose();
   }
 
   /**
-   * Closes the channel if the channel is expired.
+   * Closes the payment channel if it is expired.
    */
   function claimTimeout() public {
     require(block.timestamp >= expiration, "Contract is not expired yet.");
@@ -121,14 +125,14 @@ contract PaymentChannel {
    * Withdraws ether with signed payment message.
    *
    * @param authorizedAmount    amount of the payment.
-   * @param signature           ECDSA signature of the signed payment
+   * @param signature           ECDSA signature of the payment message
    */
   function withdraw(uint256 authorizedAmount, bytes memory signature) public {
-    require(msg.sender == receiver, "Only the receiver can withdraw.");
+    require(msg.sender == receiver, "Only the receiver can withdraw ether.");
     require(verifyPayment_(authorizedAmount, signature),
       "Signed payment message is invalid.");
     require(authorizedAmount > withdrawnAmount,
-      "Authorized amount must be greater than withdrawn amount.");
+      "Authorized amount must be greater than amount already withdrawn.");
 
     // Actual amount will be withdrawn in the following transaction.
     uint256 amount = authorizedAmount - withdrawnAmount;

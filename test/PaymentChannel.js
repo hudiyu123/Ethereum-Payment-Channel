@@ -32,7 +32,7 @@ describe('PaymentChannel', function () {
     const amount = 5
     const paymentHash = await paymentChannel.getPaymentHash(amount)
     const signature = await bob.signMessage(ethers.utils.arrayify(paymentHash))
-    await expect(paymentChannel.withdraw(amount, signature)).to.be.revertedWith('Only the receiver can withdraw.')
+    await expect(paymentChannel.withdraw(amount, signature)).to.be.revertedWith('Only the receiver can withdraw ether.')
     await expect(paymentChannel.connect(alice).withdraw(amount + 1, signature)).to.be.revertedWith(
       'Signed payment message is invalid.')
     await paymentChannel.connect(alice).withdraw(amount, signature)
@@ -41,7 +41,7 @@ describe('PaymentChannel', function () {
     const newPaymentHash = await paymentChannel.getPaymentHash(newAmount)
     const newSignature = await bob.signMessage(ethers.utils.arrayify(newPaymentHash))
     await expect(paymentChannel.connect(alice).withdraw(newAmount, newSignature)).to.be.revertedWith(
-      'Authorized amount must be greater than withdrawn amount.')
+      'Authorized amount must be greater than amount already withdrawn.')
   })
 
   it('withdraw-case2', async function () {
