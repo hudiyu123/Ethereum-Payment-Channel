@@ -2,7 +2,7 @@ const { ethers } = require('hardhat')
 
 // Gets the contract address
 const address = process.argv[2]
-// Gets the amount of ether (in wei)
+// Gets the amount of ether (in wei) within the payment
 const amount = ethers.utils.parseUnits(process.argv[3], 'wei')
 // Gets the private key of the sender
 const privateKey = process.argv[4]

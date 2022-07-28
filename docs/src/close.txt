@@ -1,7 +1,7 @@
 /**
  * Closes the payment channel.
  *
- * @param amount      amount of ether (in wei)
+ * @param amount      amount of ether (in wei) within the payment
  * @param signature   ECDSA signature of the payment message
 */
 function close(uint256 amount, bytes memory signature) external {

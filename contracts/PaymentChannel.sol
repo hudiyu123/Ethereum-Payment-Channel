@@ -42,7 +42,7 @@ contract PaymentChannel {
   /**
    * Calculates the hash of payment message.
    *
-   * @param amount    amount of ether (in wei)
+   * @param amount    amount of ether (in wei) within the payment
    * @return          hash of the payment message
    */
   function getPaymentMessageHash(uint256 amount) external view
@@ -53,7 +53,7 @@ contract PaymentChannel {
   /**
    * Calculates the hash of Ethereum signed payment message.
    *
-   * @param amount    amount of ether (in wei)
+   * @param amount    amount of ether (in wei) within the payment
    * @return          hash of the eth signed payment message
    */
   function getEthSignedPaymentMessageHash(uint256 amount) external view
@@ -64,7 +64,7 @@ contract PaymentChannel {
   /**
    * Verifies a payment message with its ECDSA signature.
    *
-   * @param amount      amount of ether (in wei)
+   * @param amount      amount of ether (in wei) within the payment
    * @param signature   ECDSA signature of the payment message
    * @return            true if the payment message is valid, otherwise false
    */
@@ -74,9 +74,36 @@ contract PaymentChannel {
   }
 
   /**
+   * Transfers ether to the channel.
+   */
+  function deposit() public payable {
+    require(msg.sender == sender, "Only the sender can deposit ether.");
+  }
+
+  /**
+   * Withdraws ether with a payment message.
+   *
+   * @param authorizedAmount    authorized amount of ether (in wei) within the payment
+   * @param signature           ECDSA signature of the payment message
+   */
+  function withdraw(uint256 authorizedAmount, bytes memory signature) public {
+    require(msg.sender == receiver, "Only the receiver can withdraw ether.");
+    require(verifyPaymentMessage_(authorizedAmount, signature),
+      "Signed payment message is invalid.");
+    require(authorizedAmount > withdrawnAmount,
+      "Authorized amount must be greater than amount already withdrawn.");
+
+    // Actual amount will be withdrawn in the following transaction.
+    uint256 amount = authorizedAmount - withdrawnAmount;
+    withdrawnAmount += amount;
+    (bool success,) = receiver.call{value : amount}("");
+    require(success, "Transaction failed.");
+  }
+
+  /**
    * Closes the payment channel.
    *
-   * @param amount      amount of ether (in wei)
+   * @param amount      amount of ether (in wei) within the payment
    * @param signature   ECDSA signature of the payment message
    */
   function close(uint256 amount, bytes memory signature) external {
@@ -114,33 +141,6 @@ contract PaymentChannel {
   function claimTimeout() public {
     require(block.timestamp >= expiration, "Contract is not expired yet.");
     selfdestruct(sender);
-  }
-
-  /**
-   * Transfers ether to the channel.
-   */
-  function deposit() public payable {
-    require(msg.sender == sender, "Only the sender can deposit ether.");
-  }
-
-  /**
-   * Withdraws ether with a payment message.
-   *
-   * @param authorizedAmount    authorized amount of ether (in wei)
-   * @param signature           ECDSA signature of the payment message
-   */
-  function withdraw(uint256 authorizedAmount, bytes memory signature) public {
-    require(msg.sender == receiver, "Only the receiver can withdraw ether.");
-    require(verifyPaymentMessage_(authorizedAmount, signature),
-      "Signed payment message is invalid.");
-    require(authorizedAmount > withdrawnAmount,
-      "Authorized amount must be greater than amount already withdrawn.");
-
-    // Actual amount will be withdrawn in the following transaction.
-    uint256 amount = authorizedAmount - withdrawnAmount;
-    withdrawnAmount += amount;
-    (bool success,) = receiver.call{value : amount}("");
-    require(success, "Transaction failed.");
   }
 
   function getPaymentMessageHash_(uint256 amount) private view

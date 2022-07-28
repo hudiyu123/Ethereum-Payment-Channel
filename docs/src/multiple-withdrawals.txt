@@ -1,7 +1,7 @@
 /**
  * Withdraws ether with a payment message.
  *
- * @param authorizedAmount    authorized amount of ether (in wei)
+ * @param authorizedAmount    authorized amount of ether (in wei) within the payment
  * @param signature           ECDSA signature of the payment message
  */
 function withdraw(uint256 authorizedAmount, bytes memory signature) public {
