@@ -1,3 +1,6 @@
+// Amount of ether (in wei) the receiver has already withdrawn
+uint256 public withdrawnAmount;
+
 /**
  * Withdraws ether with a payment message.
  *
@@ -14,6 +17,6 @@ function withdraw(uint256 authorizedAmount, bytes memory signature) public {
   // Actual amount will be withdrawn in the following transaction.
   uint256 amount = authorizedAmount - withdrawnAmount;
   withdrawnAmount += amount;
-  (bool success,) = receiver.call{value : amount}("");
+  (bool success, ) = receiver.call{value : amount}("");
   require(success, "Transaction failed.");
 }

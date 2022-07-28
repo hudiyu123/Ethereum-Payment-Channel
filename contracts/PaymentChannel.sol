@@ -96,7 +96,7 @@ contract PaymentChannel {
     // Actual amount will be withdrawn in the following transaction.
     uint256 amount = authorizedAmount - withdrawnAmount;
     withdrawnAmount += amount;
-    (bool success,) = receiver.call{value : amount}("");
+    (bool success, ) = receiver.call{value : amount}("");
     require(success, "Transaction failed.");
   }
 
@@ -117,7 +117,7 @@ contract PaymentChannel {
     // Perform transaction only when request amount is greater than amount
     // already withdrawn.
     if (amount > withdrawnAmount) {
-      (bool success,) = receiver.call{value : amount - withdrawnAmount}("");
+      (bool success, ) = receiver.call{value : amount - withdrawnAmount}("");
       require(success, "Transaction failed.");
     }
 

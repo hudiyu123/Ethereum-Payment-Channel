@@ -15,7 +15,7 @@ function close(uint256 amount, bytes memory signature) external {
   // Perform transaction only when request amount is greater than amount
   // already withdrawn.
   if (amount > withdrawnAmount) {
-    (bool success,) = receiver.call{value : amount - withdrawnAmount}("");
+    (bool success, ) = receiver.call{value : amount - withdrawnAmount}("");
     require(success, "Transaction failed.");
   }
 
