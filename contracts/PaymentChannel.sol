@@ -23,7 +23,7 @@ contract PaymentChannel {
   // channel closure
   uint public closeTimeframe;
 
-  // Expiration of the channel
+  // Expiration of the channel (initially infinite)
   uint public expiration = type(uint).max;
 
   /**
@@ -80,7 +80,8 @@ contract PaymentChannel {
   function close(uint256 amount, bytes memory signature) external {
     require(msg.sender == receiver,
       "Only the receiver can call the close function.");
-    require(verifyPayment_(amount, signature), "Signed message is invalid.");
+    require(verifyPayment_(amount, signature),
+      "Signed payment message is invalid.");
     require(amount >= withdrawnAmount,
       "Amount must be greater than or equal to withdrawn amount.");
 
@@ -110,25 +111,26 @@ contract PaymentChannel {
   }
 
   /**
-   * Transfers ethers to the channel.
+   * Transfers ether to the channel.
    */
   function deposit() public payable {
-    require(msg.sender == sender, "Only sender can deposit eth.");
+    require(msg.sender == sender, "Only the sender can deposit ether.");
   }
 
   /**
-   * Withdraws payment without close the channel.
+   * Withdraws ether with signed payment message.
    *
    * @param authorizedAmount    amount of the payment.
    * @param signature           ECDSA signature of the signed payment
    */
   function withdraw(uint256 authorizedAmount, bytes memory signature) public {
-    require(msg.sender == receiver, "Only receiver withdraw.");
+    require(msg.sender == receiver, "Only the receiver can withdraw.");
     require(verifyPayment_(authorizedAmount, signature),
-      "Signed message is invalid.");
+      "Signed payment message is invalid.");
     require(authorizedAmount > withdrawnAmount,
       "Authorized amount must be greater than withdrawn amount.");
 
+    // Actual amount will be withdrawn in the following transaction.
     uint256 amount = authorizedAmount - withdrawnAmount;
     withdrawnAmount += amount;
     (bool success,) = receiver.call{value : amount}("");

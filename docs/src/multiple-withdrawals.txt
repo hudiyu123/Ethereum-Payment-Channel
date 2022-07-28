@@ -1,0 +1,26 @@
+// Response timeframe (in seconds) for the receiver when the sender initiates
+// channel closure
+uint public closeTimeframe;
+
+// Expiration of the channel (initially infinite)
+uint public expiration = type(uint).max;
+
+/**
+ * Withdraws ether with signed payment message.
+ *
+ * @param authorizedAmount    amount of the payment.
+ * @param signature           ECDSA signature of the signed payment
+ */
+function withdraw(uint256 authorizedAmount, bytes memory signature) public {
+  require(msg.sender == receiver, "Only the receiver can withdraw.");
+  require(verifyPayment_(authorizedAmount, signature),
+    "Signed payment message is invalid.");
+  require(authorizedAmount > withdrawnAmount,
+    "Authorized amount must be greater than withdrawn amount.");
+
+  // Actual amount will be withdrawn in the following transaction.
+  uint256 amount = authorizedAmount - withdrawnAmount;
+  withdrawnAmount += amount;
+  (bool success,) = receiver.call{value : amount}("");
+  require(success, "Transaction failed.");
+}

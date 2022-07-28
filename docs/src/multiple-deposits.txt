@@ -1,0 +1,6 @@
+/**
+ * Transfers ether to the channel.
+ */
+function deposit() public payable {
+  require(msg.sender == sender, "Only the sender can deposit ether.");
+}

@@ -32,9 +32,9 @@ describe('PaymentChannel', function () {
     const amount = 5
     const paymentHash = await paymentChannel.getPaymentHash(amount)
     const signature = await bob.signMessage(ethers.utils.arrayify(paymentHash))
-    await expect(paymentChannel.withdraw(amount, signature)).to.be.revertedWith('Only receiver withdraw.')
+    await expect(paymentChannel.withdraw(amount, signature)).to.be.revertedWith('Only the receiver can withdraw.')
     await expect(paymentChannel.connect(alice).withdraw(amount + 1, signature)).to.be.revertedWith(
-      'Signed message is invalid.')
+      'Signed payment message is invalid.')
     await paymentChannel.connect(alice).withdraw(amount, signature)
 
     const newAmount = amount - 1
@@ -68,7 +68,7 @@ describe('PaymentChannel', function () {
     await expect(paymentChannel.close(amount, signature)).to.be.revertedWith(
       'Only the receiver can call the close function.')
     await expect(paymentChannel.connect(alice).close(amount + 1, signature)).to.be.revertedWith(
-      'Signed message is invalid.')
+      'Signed payment message is invalid.')
     paymentChannel.connect(alice).withdraw(amount, signature)
 
     const newAmount = amount - 1
@@ -108,7 +108,7 @@ describe('PaymentChannel', function () {
     const { paymentChannel, alice } = await loadFixture(deployPaymentChannelFixture)
     const valueStr = ethers.utils.parseUnits('5').toString()
     await expect(paymentChannel.connect(alice).deposit({ value: valueStr })).to.be.revertedWith(
-      'Only sender can deposit eth.')
+      'Only the sender can deposit ether.')
     await paymentChannel.deposit({ value: valueStr })
   })
 })
