@@ -18,7 +18,7 @@ contract PaymentChannel {
   uint256 public withdrawnAmount;
   // Response timeframe for the receiver when the sender initiates channel closure
   uint public closeTimeframe;
-  // Timeout of the channel
+  // Expiration of the channel
   uint public expiration = type(uint).max;
 
   constructor(address payable receiver_, uint closeTimeframe_) payable {
