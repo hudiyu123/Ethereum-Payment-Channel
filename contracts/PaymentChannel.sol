@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 contract PaymentChannel {
   using ECDSA for bytes32;
 
-  event StartSenderClose();
+  event InitiateSenderClose();
 
   // Sender of the payment channel
   address payable public sender;
@@ -33,7 +33,7 @@ contract PaymentChannel {
    * @param amount    amount of the payment
    * @return          hash of the payment
    */
-  function getPaymentHash(uint amount) external view returns (bytes32) {
+  function getPaymentHash(uint256 amount) external view returns (bytes32) {
     return getPaymentHash_(amount);
   }
 
@@ -43,7 +43,7 @@ contract PaymentChannel {
    * @param amount    amount of the payment
    * @return          hash of the eth signed payment
    */
-  function getEthSignedPaymentHash(uint amount) external view returns (bytes32) {
+  function getEthSignedPaymentHash(uint256 amount) external view returns (bytes32) {
     return getEthSignedPaymentHash_(amount);
   }
 
@@ -54,7 +54,7 @@ contract PaymentChannel {
    * @param signature   ECDSA signature of the signed payment
    * @return            true if the payment is valid, otherwise false
    */
-  function verifyPayment(uint amount, bytes memory signature) external view returns (bool) {
+  function verifyPayment(uint256 amount, bytes memory signature) external view returns (bool) {
     return verifyPayment_(amount, signature);
   }
 
@@ -64,7 +64,7 @@ contract PaymentChannel {
    * @param amount      amount of the payment.
    * @param signature   ECDSA signature of the signed payment
    */
-  function close(uint amount, bytes memory signature) external {
+  function close(uint256 amount, bytes memory signature) external {
     require(msg.sender == receiver, "Only the receiver can call the close function.");
     require(verifyPayment_(amount, signature), "Signed message is invalid.");
     require(amount >= withdrawnAmount, "Amount must be greater than or equal to withdrawn amount.");
@@ -83,7 +83,7 @@ contract PaymentChannel {
   function initiateSenderClose() public {
     require(msg.sender == sender, "Only the sender can initiate sender close.");
     expiration = block.timestamp + closeTimeframe;
-    emit StartSenderClose();
+    emit InitiateSenderClose();
   }
 
   /**
@@ -107,7 +107,7 @@ contract PaymentChannel {
    * @param authorizedAmount    amount of the payment.
    * @param signature           ECDSA signature of the signed payment
    */
-  function withdraw(uint authorizedAmount, bytes memory signature) public {
+  function withdraw(uint256 authorizedAmount, bytes memory signature) public {
     require(msg.sender == receiver, "Only receiver withdraw.");
     require(verifyPayment_(authorizedAmount, signature), "Signed message is invalid.");
     require(authorizedAmount > withdrawnAmount, "Authorized amount must be greater than withdrawn amount.");
@@ -116,19 +116,17 @@ contract PaymentChannel {
     withdrawnAmount += amount;
     (bool success, ) = receiver.call{value : amount}("");
     require(success, "Transaction failed.");
-
-    emit Withdraw(authorizedAmount, signature);
   }
 
-  function getPaymentHash_(uint amount) private view returns (bytes32) {
+  function getPaymentHash_(uint256 amount) private view returns (bytes32) {
     return keccak256(abi.encodePacked(address(this), amount));
   }
 
-  function getEthSignedPaymentHash_(uint amount) private view returns (bytes32) {
+  function getEthSignedPaymentHash_(uint256 amount) private view returns (bytes32) {
     return getPaymentHash_(amount).toEthSignedMessageHash();
   }
 
-  function verifyPayment_(uint amount, bytes memory signature) private view returns (bool) {
+  function verifyPayment_(uint256 amount, bytes memory signature) private view returns (bool) {
     return getEthSignedPaymentHash_(amount).recover(signature) == sender;
   }
 }
