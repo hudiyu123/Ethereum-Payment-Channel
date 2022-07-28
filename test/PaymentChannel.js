@@ -16,7 +16,7 @@ describe('PaymentChannel', function () {
     const { paymentChannel, bob } = await loadFixture(deployPaymentChannelFixture)
     const contractAddress = paymentChannel.address
     const amount = 10
-    const paymentHash = ethers.utils.solidityKeccak256(['address', 'uint'], [contractAddress, amount])
+    const paymentHash = ethers.utils.solidityKeccak256(['address', 'uint256'], [contractAddress, amount])
     expect(await paymentChannel.getPaymentHash(amount)).to.equal(paymentHash)
 
     const ethSignedPaymentHash = ethers.utils.solidityKeccak256(['string', 'bytes32'],
