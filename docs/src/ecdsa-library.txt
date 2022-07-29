@@ -1,5 +1,5 @@
 // Returns an Ethereum Signed Message, created from a hash.
 toEthSignedMessageHash(bytes32 hash) -> bytes32
 
-// Returns the address that signed a hashed message (hash) with signature.
+// Returns the address that signed a payment message.
 recover(bytes32 hash, bytes signature) -> address

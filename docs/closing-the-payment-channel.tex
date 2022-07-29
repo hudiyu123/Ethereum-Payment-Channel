@@ -1,12 +1,12 @@
 \section{Closing the Payment Channel}\label{sec:closing-the-payment-channel}
 The receiver can close the payment channel by calling the \texttt{close} function
 on the smart contract.
-Closing the payment channel pays the receiver the ether they owed and destroys
-the smart contract, and sending any remaining ether back to the sender.
+Closing the payment channel pays the receiver the ether they owed, sending any
+remaining ether back to the sender, and destroys the smart contract.
 
 \verbatiminput{./src/close.txt}
 
-The proposed payment channel also allows the sender to initiate channel closure
+The payment channel also allows the sender to initiate channel closure
 by calling the \texttt{initiateSenderClose} function.
 The receiver will then have a timeframe to retrieve any funds they are owed,
 after which the sender can access whatever is left.

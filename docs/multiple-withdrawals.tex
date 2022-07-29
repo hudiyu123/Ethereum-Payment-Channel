@@ -3,6 +3,6 @@ The receiver can withdraw funds with signed payment messages without closing the
 
 \verbatiminput{./src/multiple-withdrawals.txt}
 
-The \texttt{withdrawn} state variable tracks how much ether the receiver has already withdrawn.
+The \texttt{withdrawnAmount} state variable tracks how much ether the receiver has already withdrawn.
 For each withdrawal, the receiver withdraws the total amount that has been authorized so for minus the amount already
 withdrawn.

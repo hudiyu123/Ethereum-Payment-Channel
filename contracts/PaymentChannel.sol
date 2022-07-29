@@ -112,7 +112,7 @@ contract PaymentChannel {
     require(verifyPaymentMessage_(amount, signature),
       "Signed payment message is invalid.");
     require(amount >= withdrawnAmount,
-      "Amount must be greater than or equal to withdrawn amount.");
+      "Amount must be greater than or equal to amount already withdrawn.");
 
     // Perform transaction only when request amount is greater than amount
     // already withdrawn.

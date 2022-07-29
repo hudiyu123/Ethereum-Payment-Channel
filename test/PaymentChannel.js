@@ -75,7 +75,7 @@ describe('PaymentChannel', function () {
     const newPaymentHash = await paymentChannel.getPaymentMessageHash(newAmount)
     const newSignature = await bob.signMessage(ethers.utils.arrayify(newPaymentHash))
     await expect(paymentChannel.connect(alice).close(newAmount, newSignature)).to.be.revertedWith(
-      'Amount must be greater than or equal to withdrawn amount.')
+      'Amount must be greater than or equal to amount already withdrawn.')
 
     await paymentChannel.connect(alice).close(amount, signature)
   })

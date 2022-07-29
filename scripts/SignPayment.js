@@ -12,7 +12,7 @@ const privateKey = process.argv[4]
 // Creates a wallet with the private key
 const wallet = new ethers.Wallet(privateKey)
 
-// Calculates the payment message using keccak256 from solidity
+// Calculates the hash of the payment message using keccak256
 const paymentHash = ethers.utils.solidityKeccak256(['address', 'uint256'],
   [address, amount])
 
